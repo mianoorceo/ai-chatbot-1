@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Vazirmatn } from "next/font/google";
+import { Vazirmatn } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -20,12 +20,6 @@ const vazir = Vazirmatn({
   subsets: ["latin", "arabic"],
   display: "swap",
   variable: "--font-vazir",
-});
-
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-geist-mono",
 });
 
 const LIGHT_THEME_COLOR = "hsl(0 0% 100%)";
@@ -55,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={`${vazir.variable} ${geistMono.variable}`}
+      className={`${vazir.variable}`}
       // `next-themes` injects an extra classname to the body element to avoid
       // visual flicker before hydration. Hence the `suppressHydrationWarning`
       // prop is necessary to avoid the React hydration mismatch warning.

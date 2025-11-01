@@ -89,7 +89,6 @@
 /* define theme */
 @theme {
   --font-sans: var(--font-vazir);
-  --font-mono: var(--font-geist-mono);
 
   --breakpoint-toast-mobile: 600px;
 
