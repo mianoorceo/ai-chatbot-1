@@ -27,8 +27,8 @@ export function SidebarToggle({
           <SidebarLeftIcon size={16} />
         </Button>
       </TooltipTrigger>
-      <TooltipContent align="start" className="hidden md:block">
-        Toggle Sidebar
+      <TooltipContent align="end" className="hidden md:block">
+         نوار کناری
       </TooltipContent>
     </Tooltip>
   );

@@ -8,21 +8,21 @@ export const Greeting = () => {
     >
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="font-semibold text-xl md:text-2xl"
+        className="font-semibold text-xl md:text-2xl text-right"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.5 }}
       >
-        Hello there!
+        سلام به چت بات ما خوش اومدی
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="text-xl text-zinc-500 md:text-2xl"
+        className="text-xl text-zinc-500 md:text-2xl text-right py-2"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
       >
-        How can I help you today?
+        چجوری می تونم کمکت کنم؟
       </motion.div>
     </div>
   );

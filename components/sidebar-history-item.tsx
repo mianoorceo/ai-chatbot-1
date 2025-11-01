@@ -53,19 +53,19 @@ const PureChatItem = ({
       <DropdownMenu modal={true}>
         <DropdownMenuTrigger asChild>
           <SidebarMenuAction
-            className="mr-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            className="ml-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             showOnHover={!isActive}
           >
             <MoreHorizontalIcon />
-            <span className="sr-only">More</span>
+            <span className="sr-only">بیشتر</span>
           </SidebarMenuAction>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" side="bottom">
+        <DropdownMenuContent align="start" side="bottom">
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer">
+              <span>اشتراک‌گذاری</span>
               <ShareIcon />
-              <span>Share</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
@@ -77,7 +77,7 @@ const PureChatItem = ({
                 >
                   <div className="flex flex-row items-center gap-2">
                     <LockIcon size={12} />
-                    <span>Private</span>
+                    <span>خصوصی</span>
                   </div>
                   {visibilityType === "private" ? (
                     <CheckCircleFillIcon />
@@ -91,7 +91,7 @@ const PureChatItem = ({
                 >
                   <div className="flex flex-row items-center gap-2">
                     <GlobeIcon />
-                    <span>Public</span>
+                    <span>عمومی</span>
                   </div>
                   {visibilityType === "public" ? <CheckCircleFillIcon /> : null}
                 </DropdownMenuItem>
@@ -104,7 +104,7 @@ const PureChatItem = ({
             onSelect={() => onDelete(chat.id)}
           >
             <TrashIcon />
-            <span>Delete</span>
+            <span>حذف</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

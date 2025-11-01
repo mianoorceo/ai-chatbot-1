@@ -59,7 +59,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       <Sidebar side="right" className="group-data-[side=right]:border-l-0">
         <SidebarHeader>
           <SidebarMenu>
-            <div className="flex flex-row items-center justify-between">
+            <div className="flex flex-row-reverse items-center justify-between">
               <Link
                 className="flex flex-row items-center gap-3"
                 href="/"
@@ -68,7 +68,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 }}
               >
                 <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                  Chatbot
+                  چت بات
                 </span>
               </Link>
               <div className="flex flex-row gap-1">
@@ -85,7 +85,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent align="end" className="hidden md:block">
-                      Delete All Chats
+                      پاک کردن همه
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -105,7 +105,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent align="end" className="hidden md:block">
-                    New Chat
+                    چت جدید
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -121,16 +121,15 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       <AlertDialog onOpenChange={setShowDeleteAllDialog} open={showDeleteAllDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete all chats?</AlertDialogTitle>
+            <AlertDialogTitle>همه چت‌ها حذف شوند؟</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete all your
-              chats and remove them from our servers.
+              این اقدام قابل بازگشت نیست. این کار همه چت‌های شما را برای همیشه حذف می‌کند و آن‌ها را از سرورهای ما برمی‌دارد.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>لغو</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteAll}>
-              Delete All
+              حذف همه
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

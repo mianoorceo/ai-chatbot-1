@@ -129,7 +129,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     });
 
     toast.promise(deletePromise, {
-      loading: "Deleting chat...",
+      loading: "در حال حذف چت...",
       success: () => {
         mutate((chatHistories) => {
           if (chatHistories) {
@@ -140,9 +140,9 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
           }
         });
 
-        return "Chat deleted successfully";
+        return "چت با موفقیت حذف شد";
       },
-      error: "Failed to delete chat",
+      error: "حذف چت با مشکل مواجه شد",
     });
 
     setShowDeleteDialog(false);
@@ -156,8 +156,8 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
-          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-zinc-500">
-            Login to save and revisit previous chats!
+          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-zinc-500 text-right">
+            برای ذخیره و مشاهده مجدد چت های قبلی وارد شوید!
           </div>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -167,8 +167,8 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   if (isLoading) {
     return (
       <SidebarGroup>
-        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-          Today
+        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs text-right">
+          امروز
         </div>
         <SidebarGroupContent>
           <div className="flex flex-col">
@@ -197,8 +197,8 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
-          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-zinc-500">
-            Your conversations will appear here once you start chatting!
+          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-zinc-500 text-right">
+            وقتی چت را شروع کنید، مکالمات شما در اینجا ظاهر می شوند!
           </div>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -222,8 +222,8 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
                   <div className="flex flex-col gap-6">
                     {groupedChats.today.length > 0 && (
                       <div>
-                        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                          Today
+                        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs text-right">
+                          امروز
                         </div>
                         {groupedChats.today.map((chat) => (
                           <ChatItem
@@ -242,8 +242,8 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
                     {groupedChats.yesterday.length > 0 && (
                       <div>
-                        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                          Yesterday
+                        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs text-right">
+                          دیروز
                         </div>
                         {groupedChats.yesterday.map((chat) => (
                           <ChatItem
@@ -262,8 +262,8 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
                     {groupedChats.lastWeek.length > 0 && (
                       <div>
-                        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                          Last 7 days
+                        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs text-right">
+                          هفت روز گذشته
                         </div>
                         {groupedChats.lastWeek.map((chat) => (
                           <ChatItem
@@ -282,8 +282,8 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
                     {groupedChats.lastMonth.length > 0 && (
                       <div>
-                        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                          Last 30 days
+                        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs text-right">
+                          30 روز گذشته
                         </div>
                         {groupedChats.lastMonth.map((chat) => (
                           <ChatItem
@@ -302,8 +302,8 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
                     {groupedChats.older.length > 0 && (
                       <div>
-                        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
-                          Older than last month
+                        <div className="px-2 py-1 text-sidebar-foreground/50 text-xs text-right">
+                          قدیمی تر از 30 روز گذشته
                         </div>
                         {groupedChats.older.map((chat) => (
                           <ChatItem
@@ -333,33 +333,32 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
           />
 
           {hasReachedEnd ? (
-            <div className="mt-8 flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-zinc-500">
-              You have reached the end of your chat history.
+            <div className="mt-8 flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-zinc-500 text-right">
+              شما به انتهای سابقه چت های خود رسیده اید
             </div>
           ) : (
             <div className="mt-8 flex flex-row items-center gap-2 p-2 text-zinc-500 dark:text-zinc-400">
               <div className="animate-spin">
                 <LoaderIcon />
               </div>
-              <div>Loading Chats...</div>
+              <div className="text-right">در حال بارگذاری چت ها ...</div>
             </div>
           )}
         </SidebarGroupContent>
       </SidebarGroup>
 
       <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>آیا کاملا مطمئن هستید؟</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              chat and remove it from our servers.
+              این عمل قابل بازگشت نیست. این کار برای همیشه چت شما را حذف می کند و آن را از سرورهای ما حذف می کند.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>لغو</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>
-              Continue
+              ادامه
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

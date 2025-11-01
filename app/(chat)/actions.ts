@@ -4,6 +4,7 @@ import { generateText, type UIMessage } from "ai";
 import { cookies } from "next/headers";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { myProvider } from "@/lib/ai/providers";
+import { resolveChatModelId } from "@/lib/ai/models";
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getMessageById,
@@ -12,7 +13,7 @@ import {
 
 export async function saveChatModelAsCookie(model: string) {
   const cookieStore = await cookies();
-  cookieStore.set("chat-model", model);
+  cookieStore.set("chat-model", resolveChatModelId(model));
 }
 
 export async function generateTitleFromUserMessage({

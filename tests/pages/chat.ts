@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { expect, type Page } from "@playwright/test";
-import { chatModels } from "@/lib/ai/models";
+import { chatModels, resolveChatModelId } from "@/lib/ai/models";
 
 const CHAT_ID_REGEX =
   /^http:\/\/localhost:3000\/chat\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -107,8 +107,10 @@ export class ChatPage {
   }
 
   async chooseModelFromSelector(chatModelId: string) {
+    const resolvedChatModelId = resolveChatModelId(chatModelId);
+
     const chatModel = chatModels.find(
-      (currentChatModel) => currentChatModel.id === chatModelId
+      (currentChatModel) => currentChatModel.id === resolvedChatModelId
     );
 
     if (!chatModel) {
@@ -116,7 +118,9 @@ export class ChatPage {
     }
 
     await this.page.getByTestId("model-selector").click();
-    await this.page.getByTestId(`model-selector-item-${chatModelId}`).click();
+    await this.page
+      .getByTestId(`model-selector-item-${resolvedChatModelId}`)
+      .click();
     expect(await this.getSelectedModel()).toBe(chatModel.name);
   }
 

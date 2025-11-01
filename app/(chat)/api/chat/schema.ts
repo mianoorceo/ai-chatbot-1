@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isSupportedChatModelId } from "@/lib/ai/models";
 
 const textPartSchema = z.object({
   type: z.enum(["text"]),
@@ -21,7 +22,11 @@ export const postRequestBodySchema = z.object({
     role: z.enum(["user"]),
     parts: z.array(partSchema),
   }),
-  selectedChatModel: z.enum(["chat-model", "chat-model-reasoning"]),
+  selectedChatModel: z
+    .string()
+    .refine((model) => isSupportedChatModelId(model), {
+      message: "Unsupported chat model",
+    }),
   selectedVisibilityType: z.enum(["public", "private"]),
 });
 

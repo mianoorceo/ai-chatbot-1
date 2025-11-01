@@ -20,7 +20,12 @@ import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { saveChatModelAsCookie } from "@/app/(chat)/actions";
 import { SelectItem } from "@/components/ui/select";
-import { chatModels } from "@/lib/ai/models";
+import {
+  chatModels,
+  isReasoningChatModel,
+  visibleChatModels,
+  type ChatModelFeature,
+} from "@/lib/ai/models";
 import { myProvider } from "@/lib/ai/providers";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
@@ -306,7 +311,7 @@ function PureMultimodalInput({
             maxHeight={200}
             minHeight={44}
             onChange={handleInput}
-            placeholder="Send a message..."
+            placeholder="ارسال پیام..."
             ref={textareaRef}
             rows={1}
             value={input}
@@ -375,7 +380,7 @@ function PureAttachmentsButton({
   status: UseChatHelpers<ChatMessage>["status"];
   selectedModelId: string;
 }) {
-  const isReasoningModel = selectedModelId === "chat-model-reasoning";
+  const isReasoningModel = isReasoningChatModel(selectedModelId);
 
   return (
     <Button
@@ -412,10 +417,15 @@ function PureModelSelectorCompact({
     (model) => model.id === optimisticModelId
   );
 
+  const featureLabels: Record<ChatModelFeature, string> = {
+    reasoning: "استدلال",
+    multimodal: "چندرسانه‌ای",
+  } as const;
+
   return (
     <PromptInputModelSelect
       onValueChange={(modelName) => {
-        const model = chatModels.find((m) => m.name === modelName);
+        const model = visibleChatModels.find((m) => m.name === modelName);
         if (model) {
           setOptimisticModelId(model.id);
           onModelChange?.(model.id);
@@ -436,14 +446,32 @@ function PureModelSelectorCompact({
         </span>
         <ChevronDownIcon size={16} />
       </Trigger>
-      <PromptInputModelSelectContent className="min-w-[260px] p-0">
-        <div className="flex flex-col gap-px">
-          {chatModels.map((model) => (
-            <SelectItem key={model.id} value={model.name}>
-              <div className="truncate font-medium text-xs">{model.name}</div>
-              <div className="mt-px truncate text-[10px] text-muted-foreground leading-tight">
+      <PromptInputModelSelectContent className="w-[calc(100vw-2rem)] max-h-[72vh] max-w-sm overflow-hidden rounded-2xl border bg-popover p-0 shadow-lg sm:min-w-[280px]">
+        <div className="flex h-full flex-col gap-1 overflow-y-auto py-2">
+          {visibleChatModels.map((model) => (
+            <SelectItem
+              className="flex flex-col items-end gap-1.5 rounded-xl pr-4 text-right"
+              key={model.id}
+              value={model.name}
+            >
+              <div className="w-full truncate font-semibold text-xs">
+                {model.name}
+              </div>
+              <div className="w-full text-[10px] leading-relaxed text-muted-foreground">
                 {model.description}
               </div>
+              {model.features && model.features.length > 0 && (
+                <div className="flex w-full flex-row-reverse flex-wrap gap-1.5">
+                  {model.features.map((feature) => (
+                    <span
+                      className="rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground"
+                      key={`${model.id}-${feature}`}
+                    >
+                      {featureLabels[feature]}
+                    </span>
+                  ))}
+                </div>
+              )}
             </SelectItem>
           ))}
         </div>
