@@ -1,10 +1,10 @@
 import { gateway, type GatewayModelId } from "@ai-sdk/gateway";
+import type { LanguageModelV2 } from "@ai-sdk/provider";
 import {
   customProvider,
   extractReasoningMiddleware,
   wrapLanguageModel,
 } from "ai";
-import type { LanguageModel } from "ai";
 import {
   chatModels,
   getGatewayModelIdByChatModelId,
@@ -22,7 +22,7 @@ const createTestLanguageModels = () => {
     titleModel,
   } = require("./models.mock");
 
-  const languageModels = new Map<string, LanguageModel>();
+  const languageModels = new Map<string, LanguageModelV2>();
 
   for (const model of chatModels) {
     languageModels.set(
@@ -34,11 +34,11 @@ const createTestLanguageModels = () => {
   languageModels.set("title-model", titleModel);
   languageModels.set("artifact-model", artifactModel);
 
-  return Object.fromEntries(languageModels) as Record<string, LanguageModel>;
+  return Object.fromEntries(languageModels) as Record<string, LanguageModelV2>;
 };
 
 const createProductionLanguageModels = () => {
-  const languageModels = new Map<string, LanguageModel>();
+  const languageModels = new Map<string, LanguageModelV2>();
 
   for (const model of chatModels) {
     const gatewayModelId = getGatewayModelIdByChatModelId(model.id);
@@ -58,16 +58,16 @@ const createProductionLanguageModels = () => {
         })
       );
     } else {
-      languageModels.set(model.id, baseModel as LanguageModel);
+      languageModels.set(model.id, baseModel);
     }
   }
 
   const utilityModel = gateway.languageModel(UTILITY_MODEL_ID);
 
-  languageModels.set("title-model", utilityModel as LanguageModel);
-  languageModels.set("artifact-model", utilityModel as LanguageModel);
+  languageModels.set("title-model", utilityModel);
+  languageModels.set("artifact-model", utilityModel);
 
-  return Object.fromEntries(languageModels) as Record<string, LanguageModel>;
+  return Object.fromEntries(languageModels) as Record<string, LanguageModelV2>;
 };
 
 export const myProvider = customProvider({
