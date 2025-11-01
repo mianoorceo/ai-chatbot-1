@@ -4,7 +4,8 @@ export type ErrorType =
   | "forbidden"
   | "not_found"
   | "rate_limit"
-  | "offline";
+  | "offline"
+  | "payment_required";
 
 export type Surface =
   | "chat"
@@ -16,7 +17,8 @@ export type Surface =
   | "vote"
   | "document"
   | "suggestions"
-  | "activate_gateway";
+  | "activate_gateway"
+  | "billing";
 
 export type ErrorCode = `${ErrorType}:${Surface}`;
 
@@ -33,6 +35,7 @@ export const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   document: "response",
   suggestions: "response",
   activate_gateway: "response",
+  billing: "response",
 };
 
 export class ChatSDKError extends Error {
@@ -111,6 +114,8 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
       return "You need to sign in to view this document. Please sign in and try again.";
     case "bad_request:document":
       return "The request to create or update the document was invalid. Please check your input and try again.";
+    case "payment_required:billing":
+      return "اعتبار حساب شما کافی نیست. لطفاً ابتدا حساب خود را شارژ کنید.";
 
     default:
       return "Something went wrong. Please try again later.";
@@ -119,6 +124,8 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
 
 function getStatusCodeByType(type: ErrorType) {
   switch (type) {
+    case "payment_required":
+      return 402;
     case "bad_request":
       return 400;
     case "unauthorized":

@@ -8,9 +8,12 @@ export type ChatModel = {
   id: string;
   name: string;
   description: string;
+  providerSlug: string;
+  providerName: string;
   gatewayModelId: GatewayModelId;
   features?: ChatModelFeature[];
   hidden?: boolean;
+  searchText: string;
 };
 
 const providerDisplayNames: Record<string, string> = {
@@ -32,6 +35,11 @@ const providerDisplayNames: Record<string, string> = {
   zai: "Zhipu AI",
 };
 
+const featureSearchKeywords: Record<ChatModelFeature, string[]> = {
+  reasoning: ["reasoning", "reason", "استدلال"],
+  multimodal: ["multimodal", "multi modal", "چندرسانه ای", "چندرسانه‌ای"],
+};
+
 const uppercaseSegments = new Set([
   "ai",
   "gpt",
@@ -45,6 +53,39 @@ const uppercaseSegments = new Set([
 
 const sanitizeChatModelId = (modelId: GatewayModelId) =>
   modelId.replace(/[^a-z0-9]+/gi, "-");
+
+const normalizeSearchValue = (value: string) =>
+  value
+    .toLocaleLowerCase("fa-IR")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const buildChatModelSearchText = (options: {
+  id: string;
+  name: string;
+  description: string;
+  providerName: string;
+  providerSlug: string;
+  features?: ChatModelFeature[];
+}) => {
+  const { id, name, description, providerName, providerSlug, features } = options;
+  const featureKeywords = (features ?? []).flatMap(
+    (feature) => featureSearchKeywords[feature] ?? []
+  );
+
+  return normalizeSearchValue(
+    [
+      id,
+      name,
+      description,
+      providerName,
+      providerSlug,
+      ...featureKeywords,
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+};
 
 const formatSegment = (segment: string) => {
   const normalized = segment.toLowerCase();
@@ -245,31 +286,66 @@ const aliasChatModels: ChatModel[] = [
     name: "Grok Vision",
     description:
       "Advanced multimodal model with vision and text capabilities",
+    providerSlug: "xai",
+    providerName: providerDisplayNames.xai,
     gatewayModelId: "xai/grok-2-vision",
     features: ["multimodal"],
     hidden: true,
+    searchText: buildChatModelSearchText({
+      id: "chat-model",
+      name: "Grok Vision",
+      description:
+        "Advanced multimodal model with vision and text capabilities",
+      providerName: providerDisplayNames.xai,
+      providerSlug: "xai",
+      features: ["multimodal"],
+    }),
   },
   {
     id: "chat-model-reasoning",
     name: "Grok Reasoning",
     description:
       "Uses advanced chain-of-thought reasoning for complex problems",
+    providerSlug: "xai",
+    providerName: providerDisplayNames.xai,
     gatewayModelId: "xai/grok-3-mini",
     features: ["reasoning", "multimodal"],
     hidden: true,
+    searchText: buildChatModelSearchText({
+      id: "chat-model-reasoning",
+      name: "Grok Reasoning",
+      description:
+        "Uses advanced chain-of-thought reasoning for complex problems",
+      providerName: providerDisplayNames.xai,
+      providerSlug: "xai",
+      features: ["reasoning", "multimodal"],
+    }),
   },
 ];
 
 const vercelChatModels: ChatModel[] = VERCEL_CHAT_MODEL_IDS.map(
   (gatewayModelId) => {
     const features = getFeaturesForGatewayModel(gatewayModelId);
+    const [providerSlug] = gatewayModelId.split("/");
+    const providerName = providerDisplayNames[providerSlug] ??
+      formatSegment(providerSlug);
 
     return {
       id: sanitizeChatModelId(gatewayModelId),
       name: formatModelName(gatewayModelId),
       description: formatModelDescription(gatewayModelId),
+      providerSlug,
+      providerName,
       gatewayModelId,
       features: features.length > 0 ? features : undefined,
+      searchText: buildChatModelSearchText({
+        id: sanitizeChatModelId(gatewayModelId),
+        name: formatModelName(gatewayModelId),
+        description: formatModelDescription(gatewayModelId),
+        providerName,
+        providerSlug,
+        features: features.length > 0 ? features : undefined,
+      }),
     } satisfies ChatModel;
   }
 );
@@ -316,3 +392,53 @@ export const isSupportedChatModelId = (
 ): modelId is ChatModel["id"] => chatModelIdSet.has(modelId);
 
 export const visibleChatModels = chatModels.filter((model) => !model.hidden);
+
+export type ChatModelGroup = {
+  providerSlug: string;
+  providerName: string;
+  models: ChatModel[];
+};
+
+export const groupChatModelsByProvider = (
+  models: ChatModel[]
+): ChatModelGroup[] => {
+  const groups = new Map<string, ChatModelGroup>();
+
+  for (const model of models) {
+    const existingGroup = groups.get(model.providerSlug);
+
+    if (existingGroup) {
+      existingGroup.models.push(model);
+      continue;
+    }
+
+    groups.set(model.providerSlug, {
+      providerSlug: model.providerSlug,
+      providerName: model.providerName,
+      models: [model],
+    });
+  }
+
+  return Array.from(groups.values());
+};
+
+export const filterChatModels = (
+  models: ChatModel[],
+  query: string
+): ChatModel[] => {
+  const normalizedQuery = normalizeSearchValue(query);
+
+  if (!normalizedQuery) {
+    return models;
+  }
+
+  const terms = normalizedQuery.split(" ").filter(Boolean);
+
+  if (terms.length === 0) {
+    return models;
+  }
+
+  return models.filter((model) =>
+    terms.every((term) => model.searchText.includes(term))
+  );
+};

@@ -22,6 +22,8 @@ import { saveChatModelAsCookie } from "@/app/(chat)/actions";
 import { SelectItem } from "@/components/ui/select";
 import {
   chatModels,
+  filterChatModels,
+  groupChatModelsByProvider,
   isReasoningChatModel,
   visibleChatModels,
   type ChatModelFeature,
@@ -408,10 +410,18 @@ function PureModelSelectorCompact({
   onModelChange?: (modelId: string) => void;
 }) {
   const [optimisticModelId, setOptimisticModelId] = useState(selectedModelId);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     setOptimisticModelId(selectedModelId);
   }, [selectedModelId]);
+
+  useEffect(() => {
+    if (!open) {
+      setSearchTerm("");
+    }
+  }, [open]);
 
   const selectedModel = chatModels.find(
     (model) => model.id === optimisticModelId
@@ -421,6 +431,20 @@ function PureModelSelectorCompact({
     reasoning: "استدلال",
     multimodal: "چندرسانه‌ای",
   } as const;
+
+  const filteredChatModels = useMemo(
+    () => filterChatModels(visibleChatModels, searchTerm),
+    [searchTerm]
+  );
+
+  const groupedChatModels = useMemo(
+    () => groupChatModelsByProvider(filteredChatModels),
+    [filteredChatModels]
+  );
+
+  const hasResults = groupedChatModels.some(
+    (group) => group.models.length > 0
+  );
 
   return (
     <PromptInputModelSelect
@@ -434,6 +458,7 @@ function PureModelSelectorCompact({
           });
         }
       }}
+      onOpenChange={setOpen}
       value={selectedModel?.name}
     >
       <Trigger
@@ -447,33 +472,65 @@ function PureModelSelectorCompact({
         <ChevronDownIcon size={16} />
       </Trigger>
       <PromptInputModelSelectContent className="w-[calc(100vw-2rem)] max-h-[72vh] max-w-sm overflow-hidden rounded-2xl border bg-popover p-0 shadow-lg sm:min-w-[280px]">
+        <div className="border-b border-border/60 p-3">
+          <label className="sr-only" htmlFor="compact-model-selector-search">
+            جستجوی مدل
+          </label>
+          <input
+            autoComplete="off"
+            className="flex w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-xs outline-hidden focus:border-primary focus:outline-none"
+            dir="rtl"
+            id="compact-model-selector-search"
+            onChange={(event) => setSearchTerm(event.target.value)}
+            onKeyDown={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+            placeholder="جستجوی مدل..."
+            type="search"
+            value={searchTerm}
+          />
+        </div>
         <div className="flex h-full flex-col gap-1 overflow-y-auto py-2">
-          {visibleChatModels.map((model) => (
-            <SelectItem
-              className="flex flex-col items-end gap-1.5 rounded-xl pr-4 text-right"
-              key={model.id}
-              value={model.name}
-            >
-              <div className="w-full truncate font-semibold text-xs">
-                {model.name}
+          {groupedChatModels.map((group) => (
+            <div key={group.providerSlug} className="flex flex-col gap-1">
+              <div className="px-4 text-[11px] font-semibold text-muted-foreground">
+                {group.providerName}
               </div>
-              <div className="w-full text-[10px] leading-relaxed text-muted-foreground">
-                {model.description}
+              <div className="flex flex-col gap-1">
+                {group.models.map((model) => (
+                  <SelectItem
+                    className="flex flex-col items-end gap-1.5 rounded-xl pr-4 text-right"
+                    key={model.id}
+                    value={model.name}
+                  >
+                    <div className="w-full truncate font-semibold text-xs">
+                      {model.name}
+                    </div>
+                    <div className="w-full text-[10px] leading-relaxed text-muted-foreground">
+                      {model.description}
+                    </div>
+                    {model.features && model.features.length > 0 && (
+                      <div className="flex w-full flex-row-reverse flex-wrap gap-1.5">
+                        {model.features.map((feature) => (
+                          <span
+                            className="rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground"
+                            key={`${model.id}-${feature}`}
+                          >
+                            {featureLabels[feature]}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </SelectItem>
+                ))}
               </div>
-              {model.features && model.features.length > 0 && (
-                <div className="flex w-full flex-row-reverse flex-wrap gap-1.5">
-                  {model.features.map((feature) => (
-                    <span
-                      className="rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground"
-                      key={`${model.id}-${feature}`}
-                    >
-                      {featureLabels[feature]}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </SelectItem>
+            </div>
           ))}
+
+          {!hasResults && (
+            <div className="px-4 py-6 text-center text-[11px] text-muted-foreground">
+              هیچ نتیجه‌ای یافت نشد.
+            </div>
+          )}
         </div>
       </PromptInputModelSelectContent>
     </PromptInputModelSelect>

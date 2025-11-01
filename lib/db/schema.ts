@@ -1,5 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   foreignKey,
   json,
@@ -17,6 +18,9 @@ export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   email: varchar("email", { length: 64 }).notNull(),
   password: varchar("password", { length: 64 }),
+  balanceToman: bigint("balanceToman", { mode: "number" })
+    .notNull()
+    .default(0),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -171,3 +175,18 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+export const userTransaction = pgTable("UserTransaction", {
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  amountToman: bigint("amountToman", { mode: "number" }).notNull(),
+  type: varchar("type", { length: 32 }).notNull(),
+  reference: varchar("reference", { length: 128 }),
+  description: text("description"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type UserTransaction = InferSelectModel<typeof userTransaction>;

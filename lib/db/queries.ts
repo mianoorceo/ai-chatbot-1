@@ -10,6 +10,7 @@ import {
   gte,
   inArray,
   lt,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -29,7 +30,9 @@ import {
   stream,
   suggestion,
   type User,
+  type UserTransaction,
   user,
+  userTransaction,
   vote,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
@@ -53,6 +56,138 @@ export async function getUser(email: string): Promise<User[]> {
   }
 }
 
+export async function getUserById(userId: string): Promise<User | null> {
+  try {
+    const [record] = await db.select().from(user).where(eq(user.id, userId));
+    return record ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get user by id"
+    );
+  }
+}
+
+export async function getUserBalanceById(userId: string) {
+  try {
+    const [record] = await db
+      .select({ balanceToman: user.balanceToman })
+      .from(user)
+      .where(eq(user.id, userId));
+
+    if (!record) {
+      throw new ChatSDKError("not_found:database", "User not found");
+    }
+
+    return record.balanceToman ?? 0;
+  } catch (error) {
+    const pgError = error as { code?: string } | undefined;
+    if (pgError?.code === "42703") {
+      // Column does not exist yet (fresh database); treat as zero balance
+      return 0;
+    }
+
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to fetch user balance"
+    );
+  }
+}
+
+type TransactionType = "topup" | "usage";
+
+export async function adjustUserBalance({
+  userId,
+  amountToman,
+  type,
+  description,
+  metadata,
+  allowNegative = false,
+  reference,
+}: {
+  userId: string;
+  amountToman: number;
+  type: TransactionType;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  allowNegative?: boolean;
+  reference?: string;
+}) {
+  if (amountToman === 0) {
+    const balance = await getUserBalanceById(userId);
+    return balance;
+  }
+
+  try {
+    return await db.transaction(async (tx) => {
+      const isDebit = amountToman < 0;
+      const debitAmount = Math.abs(amountToman);
+
+      const whereClause = isDebit && !allowNegative
+        ? and(eq(user.id, userId), gte(user.balanceToman, debitAmount))
+        : eq(user.id, userId);
+
+      const [updated] = await tx
+        .update(user)
+        .set({ balanceToman: sql`${user.balanceToman} + ${amountToman}` })
+        .where(whereClause)
+        .returning({ balanceToman: user.balanceToman });
+
+      if (!updated) {
+        throw new ChatSDKError("payment_required:billing", "Insufficient funds");
+      }
+
+      await tx.insert(userTransaction).values({
+        userId,
+        amountToman,
+        type,
+        description,
+        metadata,
+        reference,
+      });
+
+      return updated.balanceToman;
+    });
+  } catch (error) {
+    const pgError = error as { code?: string } | undefined;
+    if (pgError?.code === "23505" && reference) {
+      // Duplicate reference (already processed). Return current balance.
+      return getUserBalanceById(userId);
+    }
+
+    if (error instanceof ChatSDKError) {
+      throw error;
+    }
+
+    throw new ChatSDKError(
+      "bad_request:database",
+      error instanceof Error ? error.message : "Failed to adjust balance"
+    );
+  }
+}
+
+export async function listUserTransactions({
+  userId,
+  limit = 20,
+}: {
+  userId: string;
+  limit?: number;
+}): Promise<UserTransaction[]> {
+  try {
+    return await db
+      .select()
+      .from(userTransaction)
+      .where(eq(userTransaction.userId, userId))
+      .orderBy(desc(userTransaction.createdAt))
+      .limit(limit);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to fetch user transactions"
+    );
+  }
+}
+
 export async function createUser(email: string, password: string) {
   const hashedPassword = generateHashedPassword(password);
 
@@ -71,6 +206,7 @@ export async function createGuestUser() {
     return await db.insert(user).values({ email, password }).returning({
       id: user.id,
       email: user.email,
+      balanceToman: user.balanceToman,
     });
   } catch (_error) {
     throw new ChatSDKError(

@@ -34,13 +34,19 @@ import {
   getChatById,
   getMessageCountByUserId,
   getMessagesByChatId,
+  getUserBalanceById,
+  adjustUserBalance,
   saveChat,
   saveMessages,
   updateChatLastContextById,
 } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
-import type { AppUsage } from "@/lib/usage";
+import {
+  type AppUsage,
+  getUsageCostBreakdownToman,
+  getUsageCostToman,
+} from "@/lib/usage";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
@@ -115,6 +121,12 @@ export async function POST(request: Request) {
     }
 
     const userType: UserType = session.user.type;
+
+    const currentBalanceToman = await getUserBalanceById(session.user.id);
+
+    if (currentBalanceToman <= 0) {
+      return new ChatSDKError("payment_required:billing").toResponse();
+    }
 
     const messageCount = await getMessageCountByUserId({
       id: session.user.id,
@@ -227,7 +239,12 @@ export async function POST(request: Request) {
               }
 
               const summary = getUsage({ modelId, usage, providers });
-              finalMergedUsage = { ...usage, ...summary, modelId } as AppUsage;
+              const merged = { ...usage, ...summary, modelId } as AppUsage;
+              const totalCostToman = getUsageCostToman(merged);
+              finalMergedUsage = {
+                ...merged,
+                costToman: totalCostToman,
+              };
               dataStream.write({ type: "data-usage", data: finalMergedUsage });
             } catch (err) {
               console.warn("TokenLens enrichment failed", err);
@@ -264,6 +281,34 @@ export async function POST(request: Request) {
               chatId: id,
               context: finalMergedUsage,
             });
+
+            const costToman =
+              finalMergedUsage.costToman ?? getUsageCostToman(finalMergedUsage);
+            if (costToman > 0) {
+              try {
+                await adjustUserBalance({
+                  userId: session.user.id,
+                  amountToman: -costToman,
+                  type: "usage",
+                  description: `Chat usage (${selectedChatModel})`,
+                  metadata: {
+                    chatId: id,
+                    modelId: selectedChatModel,
+                    cost: {
+                      toman: costToman,
+                      usd: finalMergedUsage.costUSD?.totalUSD ?? null,
+                      breakdown: getUsageCostBreakdownToman(finalMergedUsage),
+                    },
+                  },
+                });
+              } catch (billingError) {
+                console.warn(
+                  "Unable to deduct usage cost for chat",
+                  id,
+                  billingError
+                );
+              }
+            }
           } catch (err) {
             console.warn("Unable to persist last usage for chat", id, err);
           }
