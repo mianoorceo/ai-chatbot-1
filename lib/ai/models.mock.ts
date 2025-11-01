@@ -5,12 +5,7 @@ const createMockModel = (): LanguageModelV2 => {
     specificationVersion: "v2",
     provider: "mock",
     modelId: "mock-model",
-    defaultObjectGenerationMode: "tool",
-    defaultResponseFormat: undefined,
-    defaultStructuredOutputSchema: undefined,
     supportedUrls: {},
-    supportsImageUrls: false,
-    supportsStructuredOutputs: false,
     doGenerate: async () => ({
       rawCall: { rawPrompt: null, rawSettings: {} },
       finishReason: "stop",
