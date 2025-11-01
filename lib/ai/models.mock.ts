@@ -6,7 +6,9 @@ const createMockModel = (): LanguageModelV2 => {
     provider: "mock",
     modelId: "mock-model",
     defaultObjectGenerationMode: "tool",
-    supportedUrls: [],
+    defaultResponseFormat: undefined,
+    defaultStructuredOutputSchema: undefined,
+    supportedUrls: {},
     supportsImageUrls: false,
     supportsStructuredOutputs: false,
     doGenerate: async () => ({
